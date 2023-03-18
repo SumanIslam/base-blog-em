@@ -1,12 +1,7 @@
-import { useState } from 'react';
+import { useState, lazy, Suspense } from 'react';
 import { useQuery, QueryFunction } from 'react-query';
-
-interface Post {
-	userId: number;
-	id: number;
-	title: string;
-	body: string;
-}
+import { Post } from '../types/types'
+const PostDetail = lazy(() => import('./PostDetail').then(module => ({ default: module.PostDetail })))
 
 const fetchPosts: QueryFunction<Post[], [string, number]> = async ({
 	queryKey,
@@ -19,12 +14,11 @@ const fetchPosts: QueryFunction<Post[], [string, number]> = async ({
 
 export function Posts() {
 	const [currentPage, setCurrentPage] = useState<number>(1);
+  const [selectedPost, setSelectedPost] = useState<Post | null>(null)
 
 	const { data, status } = useQuery(['posts', currentPage], fetchPosts, {
 		staleTime: 2000,
 	});
-
-  console.log(data);
 
 	if (status === 'loading') return <div>Loading...</div>;
 	if (status === 'error')
@@ -41,11 +35,16 @@ export function Posts() {
 					<li
 						key={post.id}
 						className='post-title'
+						onClick={() => setSelectedPost(post)}
 					>
 						{post.title}
 					</li>
 				))}
 			</ul>
+			<hr />
+			<Suspense fallback={<div>Loading post details...</div>}>
+				{selectedPost && <PostDetail post={selectedPost} />}
+			</Suspense>
 		</>
 	);
 }
