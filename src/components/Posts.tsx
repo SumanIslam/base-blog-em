@@ -1,7 +1,9 @@
 import { useState, lazy, Suspense } from 'react';
 import { useQuery, QueryFunction } from 'react-query';
 import { Post } from '../types/types'
-const PostDetail = lazy(() => import('./PostDetail').then(module => ({ default: module.PostDetail })))
+const PostDetail = lazy(() => import('./PostDetail').then(module => ({ default: module.PostDetail })));
+
+const maxPostPage = 10;
 
 const fetchPosts: QueryFunction<Post[], [string, number]> = async ({
 	queryKey,
@@ -41,6 +43,25 @@ export function Posts() {
 					</li>
 				))}
 			</ul>
+			<div className='pages'>
+				<button
+					disabled={currentPage <= 1}
+					onClick={() => {
+						setCurrentPage((prevPage) => prevPage - 1);
+					}}
+				>
+					Previous page
+				</button>
+				<span>Page {currentPage}</span>
+				<button
+					disabled={currentPage >= maxPostPage}
+					onClick={() => {
+						setCurrentPage((prevPage) => prevPage + 1);
+					}}
+				>
+					Next page
+				</button>
+			</div>
 			<hr />
 			<Suspense fallback={<div>Loading post details...</div>}>
 				{selectedPost && <PostDetail post={selectedPost} />}
