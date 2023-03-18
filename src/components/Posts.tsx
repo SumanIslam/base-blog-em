@@ -1,5 +1,5 @@
-import { useState, lazy, Suspense } from 'react';
-import { useQuery, QueryFunction } from 'react-query';
+import { useState, lazy, Suspense, useEffect } from 'react';
+import { useQuery, QueryFunction, useQueryClient } from 'react-query';
 import { Post } from '../types/types'
 const PostDetail = lazy(() => import('./PostDetail').then(module => ({ default: module.PostDetail })));
 
@@ -16,11 +16,22 @@ const fetchPosts: QueryFunction<Post[], [string, number]> = async ({
 
 export function Posts() {
 	const [currentPage, setCurrentPage] = useState<number>(1);
-  const [selectedPost, setSelectedPost] = useState<Post | null>(null)
+  const [selectedPost, setSelectedPost] = useState<Post | null>(null);
+
+  const queryClient = useQueryClient();
 
 	const { data, status } = useQuery(['posts', currentPage], fetchPosts, {
 		staleTime: 2000,
+    keepPreviousData: true,
 	});
+
+  useEffect(() => {
+    if(currentPage < maxPostPage) {
+      const nextPage = currentPage + 1;
+      queryClient.prefetchQuery(['posts', nextPage], fetchPosts);
+    }
+  }, [currentPage, queryClient])
+  
 
 	if (status === 'loading') return <div>Loading...</div>;
 	if (status === 'error')
